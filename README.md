@@ -1,5 +1,7 @@
 # React + TypeScript + Vite
 
+Market ID
+INJ/USDT 0xa508cb32923323679f29a032c70342c147c17d0145625922b0ef22e955c844c0
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

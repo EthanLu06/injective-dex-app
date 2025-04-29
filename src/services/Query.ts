@@ -4,6 +4,8 @@ import {
   indexerDerivativesApi,
 } from './Services'
 
+export { indexerSpotApi }
+
 export const fetchDerivativeMarkets = async () => {
   return await indexerDerivativesApi.fetchMarkets()
 }
