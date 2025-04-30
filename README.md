@@ -2,6 +2,9 @@
 
 Market ID
 INJ/USDT 0xa508cb32923323679f29a032c70342c147c17d0145625922b0ef22e955c844c0
+
+0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

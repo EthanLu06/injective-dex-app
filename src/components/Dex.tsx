@@ -7,8 +7,8 @@ import {
   indexerSpotApi,
 } from '../services/Query'
 import { makeMsgCreateSpotLimitOrder } from '../services/Transactions'
-import { SpotMarket, PerpetualMarket, BinaryOptionsMarket } from '@injectivelabs/sdk-ts'
-
+import { SpotMarket, PerpetualMarket, BinaryOptionsMarket, Coin } from '@injectivelabs/sdk-ts'
+import { fetchBalances } from '../services/Services'
 interface Market {
   marketId: string
   ticker: string
@@ -36,12 +36,17 @@ export const Dex: React.FC = () => {
   const [address, setAddress] = useState<string>('')
   const [spotMarkets, setSpotMarkets] = useState<Market[]>([])
   const [derivativeMarkets, setDerivativeMarkets] = useState<DerivativeMarket[]>([])
+  const [balances, setBalances] = useState<Coin[]>([])
 
   const connectWallet = async () => {
     try {
       const addresses = await walletStrategy.getAddresses()
       if (addresses.length > 0) {
         setAddress(addresses[0])
+        // 获取钱包余额
+        const { balances: walletBalances } = await fetchBalances(addresses[0])
+        console.log('walletBalances', walletBalances)
+        setBalances(walletBalances)
       }
     } catch (error) {
       console.error('Error connecting wallet:', error)
@@ -155,6 +160,20 @@ export const Dex: React.FC = () => {
         <div>
           <p className="mb-2">钱包地址: {address}</p>
           
+          <div className="mb-4">
+            <h2 className="text-xl font-semibold mb-2">钱包余额</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {balances.map((balance) => (
+                <div key={balance.denom} className="border p-4 rounded">
+                  <p className="font-semibold">{balance.denom}</p>
+                  <p className="text-sm text-gray-600">
+                    余额: {balance.amount}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="mb-4">
             <h2 className="text-xl font-semibold mb-2">现货市场</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
