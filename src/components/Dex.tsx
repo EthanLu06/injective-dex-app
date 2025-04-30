@@ -51,8 +51,8 @@ export const Dex: React.FC = () => {
   const formatPrice = (price: string, baseDecimals: number, quoteDecimals: number) => {
     const priceNum = Number(price)
     if (isNaN(priceNum)) return '0'
-    // 根据代币精度计算实际价格
-    const priceFactor = Math.pow(10, baseDecimals - quoteDecimals)
+    // 计算实际价格：basePrice * (10^quoteDecimals / 10^baseDecimals)
+    const priceFactor = Math.pow(10, baseDecimals) / Math.pow(10, quoteDecimals)
     return (priceNum * priceFactor).toFixed(4)
   }
 
