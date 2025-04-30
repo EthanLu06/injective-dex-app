@@ -6,8 +6,9 @@ import {
   indexerSpotApi,
 } from '../services/Services'
 import { makeMsgCreateSpotLimitOrder } from '../services/Transactions'
-import { SpotMarket, Coin } from '@injectivelabs/sdk-ts'
+import { SpotMarket, Coin, getSpotMarketTensMultiplier } from '@injectivelabs/sdk-ts'
 import { fetchBalances } from '../services/Services'
+import { BigNumber } from '@injectivelabs/utils'
 
 interface Market {
   marketId: string
@@ -22,6 +23,8 @@ interface Market {
   minQuantityTickSize: string
   status: string
   price?: string
+  priceTensMultiplier: string
+  quantityTensMultiplier: string
 }
 
 interface OrderBookEntry {
@@ -39,6 +42,7 @@ export const Dex: React.FC = () => {
     buys: OrderBookEntry[]
     sells: OrderBookEntry[]
   }>({ buys: [], sells: [] })
+  const [lastTxHash, setLastTxHash] = useState<string>('')
 
   const connectWallet = async () => {
     try {
@@ -55,26 +59,28 @@ export const Dex: React.FC = () => {
     }
   }
 
-  const formatPrice = (price: string, baseDecimals: number, quoteDecimals: number) => {
-    const priceNum = Number(price)
-    if (isNaN(priceNum)) return '0.000'
-    // 计算实际价格：basePrice * (10^quoteDecimals / 10^baseDecimals)
-    const priceFactor = Math.pow(10, baseDecimals) / Math.pow(10, quoteDecimals)
-    return (priceNum * priceFactor).toFixed(3)
-  }
-
   const loadMarkets = async () => {
     try {
       const spot = await fetchSpotMarkets()
       
       // 只获取基本市场信息，不查询订单簿
-      const marketsWithSymbols = spot.slice(0, 10).map((market: SpotMarket) => {
+      const marketsWithSymbols = spot.slice(0, 5).map((market: SpotMarket) => {
         const [baseSymbol, quoteSymbol] = market.ticker.split('/')
         
         // 获取代币精度，如果未定义则使用默认值
         const baseDecimals = market.baseToken?.decimals || 18
         const quoteDecimals = market.quoteToken?.decimals || 6
         
+        // 获取市场的tens multiplier
+        const { priceTensMultiplier, quantityTensMultiplier } = getSpotMarketTensMultiplier({
+          minPriceTickSize: market.minPriceTickSize,
+          minQuantityTickSize: market.minQuantityTickSize,
+          baseDecimals,
+          quoteDecimals,
+        })
+        console.log('priceTensMultiplier', priceTensMultiplier)
+        console.log('quantityTensMultiplier', quantityTensMultiplier)
+
         return {
           marketId: market.marketId,
           ticker: market.ticker,
@@ -87,6 +93,8 @@ export const Dex: React.FC = () => {
           minPriceTickSize: market.minPriceTickSize.toString(),
           minQuantityTickSize: market.minQuantityTickSize.toString(),
           status: market.marketStatus,
+          priceTensMultiplier: priceTensMultiplier.toString(),
+          quantityTensMultiplier: quantityTensMultiplier.toString(),
         }
       })
       
@@ -100,14 +108,33 @@ export const Dex: React.FC = () => {
     loadMarkets()
   }, [])
 
-  const createSpotOrder = async (market: Market, price: string, quantity: string) => {
+  const createSpotOrder = async (market: Market, price: string, quantity: string, orderType: number) => {
     try {
+      console.log('quantity', quantity)
+      const adjustedQuantity = new BigNumber(quantity)
+        .shiftedBy(market.baseDecimals)
+        .toString()
+      console.log('adjustedQuantity', adjustedQuantity)
+
       const msg = makeMsgCreateSpotLimitOrder({
         price,
-        quantity,
-        orderType: 1, // 1 for buy, 2 for sell
+        quantity: adjustedQuantity,
+        orderType, // 1 for buy, 2 for sell
         injectiveAddress: address,
-        market,
+        market: {
+          ...market,
+          priceTensMultiplier: Number(market.priceTensMultiplier),
+          quantityTensMultiplier: Number(market.quantityTensMultiplier),
+          baseDecimals: market.baseDecimals,
+          quoteDecimals: market.quoteDecimals,
+        },
+      })
+
+      console.log('Creating order with:', {
+        price,
+        quantity: adjustedQuantity,
+        baseDecimals: market.baseDecimals,
+        originalQuantity: quantity
       })
 
       const response = await msgBroadcaster.broadcast({
@@ -116,6 +143,7 @@ export const Dex: React.FC = () => {
       })
 
       console.log('Order created:', response)
+      setLastTxHash(response.txHash)
     } catch (error) {
       console.error('Error creating spot order:', error)
     }
@@ -124,34 +152,38 @@ export const Dex: React.FC = () => {
   const loadOrderBook = async (market: Market) => {
     try {
       const orderbook = await indexerSpotApi.fetchOrderbookV2(market.marketId)
+      console.log('market', market) 
       console.log('orderbook', orderbook)
-      // 处理卖单（asks）
-      const sells = orderbook.sells.map(sell => {
-        const price = formatPrice(sell.price, market.baseDecimals, market.quoteDecimals)
-        const size = (Number(sell.quantity) / Math.pow(10, market.baseDecimals)).toFixed(3)
+
+      const formatOrder = (order: { price: string; quantity: string }) => {
+        const price = new BigNumber(order.price)
+          .shiftedBy(market.baseDecimals - market.quoteDecimals)
+          .toFixed(3)
+        const size = new BigNumber(order.quantity)
+          .shiftedBy(-market.baseDecimals)
+          .toFixed(3)
         return {
           price,
           size,
           total: (Number(price) * Number(size)).toFixed(3)
         }
-      })
+      }
+
+      // 处理卖单（asks）
+      const sells = orderbook.sells.map(formatOrder)
 
       // 处理买单（bids）
-      const buys = orderbook.buys.map(buy => {
-        const price = formatPrice(buy.price, market.baseDecimals, market.quoteDecimals)
-        const size = (Number(buy.quantity) / Math.pow(10, market.baseDecimals)).toFixed(3)
-        return {
-          price,
-          size,
-          total: (Number(price) * Number(size)).toFixed(3)
-        }
-      })
+      const buys = orderbook.buys.map(formatOrder)
 
       // 更新当前市场价格
       const currentPrice = orderbook.buys.length > 0 
-        ? formatPrice(orderbook.buys[0].price, market.baseDecimals, market.quoteDecimals)
+        ? new BigNumber(orderbook.buys[0].price)
+          .shiftedBy(market.baseDecimals - market.quoteDecimals)
+          .toFixed(3)
         : orderbook.sells.length > 0 
-          ? formatPrice(orderbook.sells[0].price, market.baseDecimals, market.quoteDecimals)
+          ? new BigNumber(orderbook.sells[0].price)
+            .shiftedBy(market.baseDecimals - market.quoteDecimals)
+            .toFixed(3)
           : '0.000'
 
       setOrderBook({ buys, sells })
@@ -269,18 +301,32 @@ export const Dex: React.FC = () => {
                   {/* 交易操作区 */}
                   <div className="mt-4 flex gap-4">
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, orderBook.sells[0]?.price || '0', '1')}
+                      onClick={() => createSpotOrder(selectedMarket, '2', '1000000000000', 2)}
                       className="bg-[#FF3B3B] hover:bg-[#FF4B4B] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
-                      卖出
+                      卖出 1 {selectedMarket.baseSymbol}
                     </button>
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, orderBook.buys[0]?.price || '0', '1')}
+                      onClick={() => createSpotOrder(selectedMarket, '2', '1000000000000', 1)}
                       className="bg-[#00C076] hover:bg-[#00D086] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
-                      买入
+                      买入 1 {selectedMarket.baseSymbol}
                     </button>
                   </div>
+
+                  {/* 交易哈希显示 */}
+                  {lastTxHash && (
+                    <div className="mt-4 text-sm text-gray-400">
+                      最新交易哈希: <a 
+                        href={`https://testnet.explorer.injective.network/transaction/${lastTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:text-blue-600 break-all"
+                      >
+                        {lastTxHash}
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
