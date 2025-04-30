@@ -78,8 +78,6 @@ export const Dex: React.FC = () => {
           baseDecimals,
           quoteDecimals,
         })
-        console.log('priceTensMultiplier', priceTensMultiplier)
-        console.log('quantityTensMultiplier', quantityTensMultiplier)
 
         return {
           marketId: market.marketId,
@@ -144,6 +142,11 @@ export const Dex: React.FC = () => {
 
       console.log('Order created:', response)
       setLastTxHash(response.txHash)
+
+      // 交易成功后重新加载订单簿
+      if (selectedMarket) {
+        await loadOrderBook(selectedMarket)
+      }
     } catch (error) {
       console.error('Error creating spot order:', error)
     }
@@ -301,13 +304,13 @@ export const Dex: React.FC = () => {
                   {/* 交易操作区 */}
                   <div className="mt-4 flex gap-4">
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '2', '1000000000000', 2)}
+                      onClick={() => createSpotOrder(selectedMarket, '32500000000000', '1000000000000', 2)}
                       className="bg-[#FF3B3B] hover:bg-[#FF4B4B] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       卖出 1 {selectedMarket.baseSymbol}
                     </button>
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '2', '1000000000000', 1)}
+                      onClick={() => createSpotOrder(selectedMarket, '32500000000000', '1000000000000', 1)}
                       className="bg-[#00C076] hover:bg-[#00D086] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       买入 1 {selectedMarket.baseSymbol}
