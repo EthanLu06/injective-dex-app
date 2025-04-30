@@ -15,9 +15,25 @@ export const indexerDerivativesApi = new IndexerGrpcDerivativesApi(ENDPOINTS.ind
 
 export const fetchBalances = async (injectiveAddress: string) => {
   try {
-    return await chainBankApi.fetchBalances(injectiveAddress)
+    console.log('Fetching balances for address:', injectiveAddress)
+    console.log('Using endpoints:', ENDPOINTS)
+    const result = await chainBankApi.fetchBalances(injectiveAddress)
+    console.log('Balance result:', result)
+    return result
   } catch (error) {
     console.error('Error fetching balances:', error)
+    throw error
+  }
+}
+
+export const fetchSpotMarkets = async () => {
+  try {
+    console.log('Fetching spot markets')
+    const result = await indexerSpotApi.fetchMarkets()
+    console.log('Spot markets result:', result)
+    return result
+  } catch (error) {
+    console.error('Error fetching spot markets:', error)
     throw error
   }
 } 
