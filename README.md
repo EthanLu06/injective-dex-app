@@ -1,62 +1,71 @@
-# React + TypeScript + Vite
+# Injective DEX DApp
 
-Market ID
-INJ/USDT 0xa508cb32923323679f29a032c70342c147c17d0145625922b0ef22e955c844c0
+这是一个基于 Injective 协议的去中心化交易所（DEX）前端应用，使用 React + TypeScript + Vite 构建。
 
-0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe
+## 功能特点
 
-0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe
+- 连接 Injective 钱包
+- 查看钱包余额
+- 查看现货市场列表
+- 实时订单簿显示
+- 支持市价单交易
+- 交易历史记录
+- 支持 INJ/USDT 等交易对
 
-0x0611780ba69656949525013d947713300f56c37b6175e02f26bffa495c3208fe
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 技术栈
 
-Currently, two official plugins are available:
+- React 18
+- TypeScript
+- Vite
+- TailwindCSS
+- @injectivelabs/sdk-ts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 开发环境设置
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. 安装依赖
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+2. 启动开发服务器
+```bash
+npm run dev
 ```
+
+3. 构建生产版本
+```bash
+npm run build
+```
+
+## 项目结构
+
+```
+src/
+  ├── components/     # React 组件
+  ├── services/      # 服务层（钱包、API等）
+  ├── types/         # TypeScript 类型定义
+  └── utils/         # 工具函数
+```
+
+## 主要功能说明
+
+### 订单簿
+- 显示当前市场的最新买单和卖单
+- 实时更新价格和数量
+- 支持查看交易深度
+
+### 交易功能
+- 支持市价单交易
+- 显示交易哈希
+- 交易成功后自动更新订单簿
+
+### 钱包集成
+- 支持 Injective 钱包连接
+- 显示钱包余额
+- 支持多代币余额查询
+
+## 注意事项
+
+- 当前版本仅支持测试网
+- 请确保钱包中有足够的测试代币
+- 交易前请仔细核对价格和数量
