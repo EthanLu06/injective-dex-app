@@ -110,7 +110,7 @@ export function Dex() {
     try {
       console.log('quantity', quantity)
       const adjustedQuantity = new BigNumber(quantity)
-        .shiftedBy(market.baseDecimals)
+        .shiftedBy(market.baseDecimals+(market.baseDecimals-market.quoteDecimals))
         .toString()
       console.log('adjustedQuantity', adjustedQuantity)
 
@@ -311,13 +311,13 @@ export function Dex() {
                   {/* 交易操作区 */}
                   <div className="mt-4 flex gap-4">
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '32.5', '1000000000000', 2)}
+                      onClick={() => createSpotOrder(selectedMarket, selectedMarket.price || '0', '1', 2)}
                       className="bg-[#FF3B3B] hover:bg-[#FF4B4B] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       卖出 1 {selectedMarket.baseSymbol}
                     </button>
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '32.5', '1000000000000', 1)}
+                      onClick={() => createSpotOrder(selectedMarket, selectedMarket.price || '0', '1', 1)}
                       className="bg-[#00C076] hover:bg-[#00D086] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       买入 1 {selectedMarket.baseSymbol}
