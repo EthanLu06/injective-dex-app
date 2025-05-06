@@ -33,7 +33,7 @@ interface OrderBookEntry {
   total: string
 }
 
-export const Dex: React.FC = () => {
+export function Dex() {
   const [address, setAddress] = useState<string>('')
   const [spotMarkets, setSpotMarkets] = useState<Market[]>([])
   const [balances, setBalances] = useState<Coin[]>([])
@@ -114,19 +114,19 @@ export const Dex: React.FC = () => {
         .toString()
       console.log('adjustedQuantity', adjustedQuantity)
 
-      const msg = makeMsgCreateSpotLimitOrder({
+      const msg = makeMsgCreateSpotLimitOrder(
         price,
-        quantity: adjustedQuantity,
-        orderType, // 1 for buy, 2 for sell
-        injectiveAddress: address,
-        market: {
+        adjustedQuantity,
+        orderType,
+        address,
+        {
           ...market,
           priceTensMultiplier: Number(market.priceTensMultiplier),
           quantityTensMultiplier: Number(market.quantityTensMultiplier),
           baseDecimals: market.baseDecimals,
           quoteDecimals: market.quoteDecimals,
-        },
-      })
+        }
+      )
 
       console.log('Creating order with:', {
         price,
@@ -158,10 +158,17 @@ export const Dex: React.FC = () => {
       console.log('market', market) 
       console.log('orderbook', orderbook)
 
+      // price: 最小单位表示的价格,即 1 inj 是多少 usdt
+      // quantity: 最小单位表示的数量,即 1000000000000000000 个 inj
+      // 这里将价格和数量都转成人类可读的单位 (USDT & INJ)
+
+      // 0.000000000032923 -> 32.923 USDT
       const formatOrder = (order: { price: string; quantity: string }) => {
         const price = new BigNumber(order.price)
           .shiftedBy(market.baseDecimals - market.quoteDecimals)
           .toFixed(3)
+
+        // 1000000000000000000 inj -> 1.000 INJ
         const size = new BigNumber(order.quantity)
           .shiftedBy(-market.baseDecimals)
           .toFixed(3)
@@ -304,13 +311,13 @@ export const Dex: React.FC = () => {
                   {/* 交易操作区 */}
                   <div className="mt-4 flex gap-4">
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '32500000000000', '1000000000000', 2)}
+                      onClick={() => createSpotOrder(selectedMarket, '32.5', '1000000000000', 2)}
                       className="bg-[#FF3B3B] hover:bg-[#FF4B4B] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       卖出 1 {selectedMarket.baseSymbol}
                     </button>
                     <button
-                      onClick={() => createSpotOrder(selectedMarket, '32500000000000', '1000000000000', 1)}
+                      onClick={() => createSpotOrder(selectedMarket, '32.5', '1000000000000', 1)}
                       className="bg-[#00C076] hover:bg-[#00D086] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
                       买入 1 {selectedMarket.baseSymbol}

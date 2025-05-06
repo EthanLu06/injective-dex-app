@@ -19,17 +19,12 @@ interface Market {
   quantityTensMultiplier: number
 }
 
-export const makeMsgSend = ({
-  sender,
-  recipient,
-  amount,
-  denom,
-}: {
-  sender: string
-  recipient: string
-  amount: string
+export const makeMsgSend = (
+  sender: string,
+  recipient: string,
+  amount: string,
   denom: string
-}) => {
+) => {
   const amountObj = {
     denom,
     amount: new BigNumberInBase(amount).toWei(18).toString(), // 假设代币精度为18
@@ -42,19 +37,13 @@ export const makeMsgSend = ({
   })
 }
 
-export const makeMsgCreateSpotLimitOrder = ({
-  price,
-  quantity,
-  orderType,
-  injectiveAddress,
-  market,
-}: {
-  price: string
-  quantity: string
-  orderType: number
-  injectiveAddress: string
-  market: any
-}) => {
+export const makeMsgCreateSpotLimitOrder = (
+  price: string,
+  quantity: string,
+  orderType: number,
+  injectiveAddress: string,
+  market: Market
+) => {
   const subaccountId = getDefaultSubaccountId(injectiveAddress)
 
   return MsgCreateSpotLimitOrder.fromJSON({
@@ -77,21 +66,14 @@ export const makeMsgCreateSpotLimitOrder = ({
   })
 }
 
-export const makeMsgCreateDerivativeMarketOrder = ({
-  price,
-  margin,
-  quantity,
-  orderType,
-  injectiveAddress,
-  market,
-}: {
-  price: string
-  margin: string
-  quantity: string
-  orderType: OrderType
-  injectiveAddress: string
+export const makeMsgCreateDerivativeMarketOrder = (
+  price: string,
+  margin: string,
+  quantity: string,
+  orderType: OrderType,
+  injectiveAddress: string,
   market: Market
-}) => {
+) => {
   const subaccountId = getDefaultSubaccountId(injectiveAddress)
 
   return MsgCreateDerivativeMarketOrder.fromJSON({
