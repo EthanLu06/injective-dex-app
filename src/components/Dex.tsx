@@ -217,21 +217,21 @@ export function Dex() {
               onClick={connectWallet}
               className="bg-blue-500 text-white px-4 py-2 rounded"
             >
-              连接钱包
+              Connect Wallet
             </button>
           </div>
         ) : (
           <div className="w-full">
-            <p className="mb-2 text-center">钱包地址: {address}</p>
+            <p className="mb-2 text-center">Wallet Address: {address}</p>
             
             <div className="mb-4">
-              <h2 className="text-xl font-semibold mb-2 text-center">钱包余额</h2>
+              <h2 className="text-xl font-semibold mb-2 text-center">Wallet Balance</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {balances.map((balance) => (
                   <div key={balance.denom} className="border p-4 rounded">
                     <p className="font-semibold">{balance.denom}</p>
                     <p className="text-sm text-gray-600">
-                      余额: {balance.amount}
+                      Balance: {balance.amount}
                     </p>
                   </div>
                 ))}
@@ -239,9 +239,9 @@ export function Dex() {
             </div>
 
             <div className="mb-4">
-              <h2 className="text-xl font-semibold mb-2 text-center">现货市场</h2>
+              <h2 className="text-xl font-semibold mb-2 text-center">Spot Markets</h2>
               
-              {/* 市场选择器 */}
+              {/* Market Selector */}
               <div className="flex gap-2 mb-4 flex-wrap justify-center">
                 {spotMarkets.map((market) => (
                   <button
@@ -258,11 +258,11 @@ export function Dex() {
                 ))}
               </div>
 
-              {/* 订单簿显示 */}
+              {/* Orderbook Display */}
               {selectedMarket && (
                 <div className="border rounded-lg p-4 bg-[#1A1A1A] text-white w-full">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-lg">{selectedMarket.ticker} 订单簿</h3>
+                    <h3 className="font-semibold text-lg">{selectedMarket.ticker} Orderbook</h3>
                     <div className="grid grid-cols-3 gap-4 text-sm w-2/3 text-right text-gray-400">
                       <span>Price ({selectedMarket.quoteSymbol})</span>
                       <span>Size ({selectedMarket.baseSymbol})</span>
@@ -270,7 +270,7 @@ export function Dex() {
                     </div>
                   </div>
 
-                  {/* 卖单区域 */}
+                  {/* Sell Orders */}
                   <div className="mb-2 max-h-[200px] overflow-y-auto">
                     {orderBook.sells.slice().reverse().slice(-3).map((sell, index) => (
                       <div 
@@ -284,7 +284,7 @@ export function Dex() {
                     ))}
                   </div>
 
-                  {/* 当前价格 */}
+                  {/* Current Price */}
                   <div className="text-center py-2 border-y border-[#2A2A2A] my-2">
                     <div className="text-xl font-mono font-bold">
                       {selectedMarket.price}
@@ -294,7 +294,7 @@ export function Dex() {
                     </div>
                   </div>
 
-                  {/* 买单区域 */}
+                  {/* Buy Orders */}
                   <div className="max-h-[200px] overflow-y-auto">
                     {orderBook.buys.slice(0, 3).map((buy, index) => (
                       <div 
@@ -308,26 +308,26 @@ export function Dex() {
                     ))}
                   </div>
 
-                  {/* 交易操作区 */}
+                  {/* Trading Buttons */}
                   <div className="mt-4 flex gap-4">
                     <button
                       onClick={() => createSpotOrder(selectedMarket, selectedMarket.price || '0', '1', 2)}
                       className="bg-[#FF3B3B] hover:bg-[#FF4B4B] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
-                      卖出 1 {selectedMarket.baseSymbol}
+                      Sell 1 {selectedMarket.baseSymbol}
                     </button>
                     <button
                       onClick={() => createSpotOrder(selectedMarket, selectedMarket.price || '0', '1', 1)}
                       className="bg-[#00C076] hover:bg-[#00D086] text-white px-4 py-2 rounded-lg flex-1 font-semibold transition-colors text-sm"
                     >
-                      买入 1 {selectedMarket.baseSymbol}
+                      Buy 1 {selectedMarket.baseSymbol}
                     </button>
                   </div>
 
-                  {/* 交易哈希显示 */}
+                  {/* Transaction Hash Display */}
                   {lastTxHash && (
                     <div className="mt-4 text-sm text-gray-400">
-                      最新交易哈希: <a 
+                      Latest Transaction: <a 
                         href={`https://testnet.explorer.injective.network/transaction/${lastTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
