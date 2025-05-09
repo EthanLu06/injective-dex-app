@@ -3,11 +3,11 @@ import { walletStrategy } from '../services/Wallet'
 import { msgBroadcaster } from '../services/MsgBroadcaster'
 import {
   fetchSpotMarkets,
-  indexerSpotApi,
+  fetchBalances,
+  fetchOrderBook
 } from '../services/Services'
 import { makeMsgCreateSpotLimitOrder } from '../services/Transactions'
 import { SpotMarket, Coin, getSpotMarketTensMultiplier } from '@injectivelabs/sdk-ts'
-import { fetchBalances } from '../services/Services'
 import { BigNumber } from '@injectivelabs/utils'
 
 interface Market {
@@ -154,48 +154,8 @@ export function Dex() {
 
   const loadOrderBook = async (market: Market) => {
     try {
-      const orderbook = await indexerSpotApi.fetchOrderbookV2(market.marketId)
-      console.log('market', market) 
-      console.log('orderbook', orderbook)
-
-      // price: 最小单位表示的价格,即 1 inj 是多少 usdt
-      // quantity: 最小单位表示的数量,即 1000000000000000000 个 inj
-      // 这里将价格和数量都转成人类可读的单位 (USDT & INJ)
-
-      // 0.000000000032923 -> 32.923 USDT
-      const formatOrder = (order: { price: string; quantity: string }) => {
-        const price = new BigNumber(order.price)
-          .shiftedBy(market.baseDecimals - market.quoteDecimals)
-          .toFixed(3)
-
-        // 1000000000000000000 inj -> 1.000 INJ
-        const size = new BigNumber(order.quantity)
-          .shiftedBy(-market.baseDecimals)
-          .toFixed(3)
-        return {
-          price,
-          size,
-          total: (Number(price) * Number(size)).toFixed(3)
-        }
-      }
-
-      // 处理卖单（asks）
-      const sells = orderbook.sells.map(formatOrder)
-
-      // 处理买单（bids）
-      const buys = orderbook.buys.map(formatOrder)
-
-      // 更新当前市场价格
-      const currentPrice = orderbook.buys.length > 0 
-        ? new BigNumber(orderbook.buys[0].price)
-          .shiftedBy(market.baseDecimals - market.quoteDecimals)
-          .toFixed(3)
-        : orderbook.sells.length > 0 
-          ? new BigNumber(orderbook.sells[0].price)
-            .shiftedBy(market.baseDecimals - market.quoteDecimals)
-            .toFixed(3)
-          : '0.000'
-
+      const { buys, sells, currentPrice } = await fetchOrderBook(market)
+      
       setOrderBook({ buys, sells })
       setSelectedMarket({
         ...market,
