@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { walletStrategy } from '../services/Wallet'
-import { msgBroadcaster } from '../services/MsgBroadcaster'
 import {
-  fetchSpotMarkets,
   fetchBalances,
-  fetchOrderBook
+  fetchOrderBook,
+  fetchMarketsWithDetails
 } from '../services/Services'
+import { Coin } from '@injectivelabs/sdk-ts'
+import { msgBroadcaster } from '../services/MsgBroadcaster'
 import { makeMsgCreateSpotLimitOrder } from '../services/Transactions'
-import { SpotMarket, Coin, getSpotMarketTensMultiplier } from '@injectivelabs/sdk-ts'
 import { BigNumber } from '@injectivelabs/utils'
 
 interface Market {
@@ -61,41 +61,7 @@ export function Dex() {
 
   const loadMarkets = async () => {
     try {
-      const spot = await fetchSpotMarkets()
-      
-      // 只获取基本市场信息，不查询订单簿
-      const marketsWithSymbols = spot.slice(0, 5).map((market: SpotMarket) => {
-        const [baseSymbol, quoteSymbol] = market.ticker.split('/')
-        
-        // 获取代币精度，如果未定义则使用默认值
-        const baseDecimals = market.baseToken?.decimals || 18
-        const quoteDecimals = market.quoteToken?.decimals || 6
-        
-        // 获取市场的tens multiplier
-        const { priceTensMultiplier, quantityTensMultiplier } = getSpotMarketTensMultiplier({
-          minPriceTickSize: market.minPriceTickSize,
-          minQuantityTickSize: market.minQuantityTickSize,
-          baseDecimals,
-          quoteDecimals,
-        })
-
-        return {
-          marketId: market.marketId,
-          ticker: market.ticker,
-          baseDenom: market.baseDenom,
-          quoteDenom: market.quoteDenom,
-          baseSymbol,
-          quoteSymbol,
-          baseDecimals,
-          quoteDecimals,
-          minPriceTickSize: market.minPriceTickSize.toString(),
-          minQuantityTickSize: market.minQuantityTickSize.toString(),
-          status: market.marketStatus,
-          priceTensMultiplier: priceTensMultiplier.toString(),
-          quantityTensMultiplier: quantityTensMultiplier.toString(),
-        }
-      })
-      
+      const marketsWithSymbols = await fetchMarketsWithDetails()
       setSpotMarkets(marketsWithSymbols)
     } catch (error) {
       console.error('Error loading markets:', error)
@@ -106,6 +72,20 @@ export function Dex() {
     loadMarkets()
   }, [])
 
+  const loadOrderBook = async (market: Market) => {
+    try {
+      const { buys, sells, currentPrice } = await fetchOrderBook(market)
+      
+      setOrderBook({ buys, sells })
+      setSelectedMarket({
+        ...market,
+        price: currentPrice
+      })
+    } catch (error) {
+      console.error('Error loading orderbook:', error)
+    }
+  }
+  
   const createSpotOrder = async (market: Market, price: string, quantity: string, orderType: number) => {
     try {
       console.log('quantity', quantity)
@@ -152,19 +132,7 @@ export function Dex() {
     }
   }
 
-  const loadOrderBook = async (market: Market) => {
-    try {
-      const { buys, sells, currentPrice } = await fetchOrderBook(market)
-      
-      setOrderBook({ buys, sells })
-      setSelectedMarket({
-        ...market,
-        price: currentPrice
-      })
-    } catch (error) {
-      console.error('Error loading orderbook:', error)
-    }
-  }
+  
 
   return (
     <div className="p-4 w-full h-full">
