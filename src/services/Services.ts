@@ -8,16 +8,16 @@ import {
 import { getNetworkEndpoints, Network } from '@injectivelabs/networks'
 import { BigNumber } from '@injectivelabs/utils'
 
-// 使用测试网
+// Using testnet
 export const NETWORK = Network.Testnet
 export const ENDPOINTS = getNetworkEndpoints(NETWORK)
 
-// 初始化各种API客户端
+// Initialize API clients
 export const chainBankApi = new ChainGrpcBankApi(ENDPOINTS.grpc)
 export const indexerSpotApi = new IndexerGrpcSpotApi(ENDPOINTS.indexer)
 export const indexerDerivativesApi = new IndexerGrpcDerivativesApi(ENDPOINTS.indexer)
 
-// 获取钱包余额
+// Fetch wallet balances
 export const fetchBalances = async (injectiveAddress: string) => {
   try {
     console.log('Fetching balances for address:', injectiveAddress)
@@ -31,38 +31,38 @@ export const fetchBalances = async (injectiveAddress: string) => {
   }
 }
 
-// 市场详情接口定义
+// Market details interface definition
 interface MarketDetails {
-  marketId: string
-  ticker: string
-  baseDenom: string
-  quoteDenom: string
-  baseSymbol: string
-  quoteSymbol: string
-  baseDecimals: number
-  quoteDecimals: number
-  minPriceTickSize: string
-  minQuantityTickSize: string
-  status: string
-  priceTensMultiplier: string
-  quantityTensMultiplier: string
+  marketId: string      // Unique market identifier
+  ticker: string        // Trading pair identifier, e.g. "INJ/USDT"
+  baseDenom: string     // Base token's on-chain identifier
+  quoteDenom: string    // Quote token's on-chain identifier
+  baseSymbol: string    // Base token symbol, e.g. "INJ"
+  quoteSymbol: string   // Quote token symbol, e.g. "USDT"
+  baseDecimals: number  // Base token decimal places
+  quoteDecimals: number // Quote token decimal places
+  minPriceTickSize: string    // Minimum price movement unit
+  minQuantityTickSize: string // Minimum quantity movement unit
+  status: string        // Market status (e.g. active, inactive)
+  priceTensMultiplier: string // Price precision adjustment multiplier
+  quantityTensMultiplier: string // Quantity precision adjustment multiplier
 }
 
-// 获取市场列表并处理数据
+// Fetch and process market list
 export const fetchMarketsWithDetails = async (): Promise<MarketDetails[]> => {
   try {
     const spot = await indexerSpotApi.fetchMarkets()
     
-    // 只获取前5个市场的基本信息
+    // Only get basic info for first 5 markets
     const marketsWithSymbols = spot.slice(0, 5).map((market: SpotMarket) => {
-      // 从ticker中分离出基础代币和报价代币的符号
+      // Split ticker to get base and quote token symbols
       const [baseSymbol, quoteSymbol] = market.ticker.split('/')
       
-      // 获取代币精度，如果未定义则使用默认值
+      // Get token decimals, use defaults if undefined
       const baseDecimals = market.baseToken?.decimals || 18
       const quoteDecimals = market.quoteToken?.decimals || 6
       
-      // 获取市场的tens multiplier，用于价格和数量的精度调整
+      // Get market tens multiplier for price and quantity precision adjustment
       const { priceTensMultiplier, quantityTensMultiplier } = getSpotMarketTensMultiplier({
         minPriceTickSize: market.minPriceTickSize,
         minQuantityTickSize: market.minQuantityTickSize,
@@ -94,28 +94,28 @@ export const fetchMarketsWithDetails = async (): Promise<MarketDetails[]> => {
   }
 }
 
-// 订单簿市场接口定义
+// Orderbook market interface definition
 interface Market {
-  marketId: string
-  baseDecimals: number
-  quoteDecimals: number
+  marketId: string      // Unique market identifier
+  baseDecimals: number  // Base token decimal places
+  quoteDecimals: number // Quote token decimal places
 }
 
-// 获取订单簿数据
+// Fetch orderbook data
 export const fetchOrderBook = async (market: Market) => {
   try {
     const orderbook = await indexerSpotApi.fetchOrderbookV2(market.marketId)
     console.log('market', market) 
     console.log('orderbook', orderbook)
 
-    // 格式化订单数据，包括价格和数量的转换
+    // Format order data, including price and quantity conversion
     const formatOrder = (order: { price: string; quantity: string }) => {
-      // 将价格转换为人类可读格式，考虑代币精度差异
+      // Convert price to human-readable format, considering token decimal differences
       const price = new BigNumber(order.price)
         .shiftedBy(market.baseDecimals - market.quoteDecimals)
         .toFixed(3)
 
-      // 将数量转换为人类可读格式
+      // Convert quantity to human-readable format
       const size = new BigNumber(order.quantity)
         .shiftedBy(-market.baseDecimals)
         .toFixed(3)
@@ -126,14 +126,14 @@ export const fetchOrderBook = async (market: Market) => {
       }
     }
 
-    // 处理卖单（asks）
+    // Process sell orders (asks)
     const sells = orderbook.sells.map(formatOrder)
 
-    // 处理买单（bids）
+    // Process buy orders (bids)
     const buys = orderbook.buys.map(formatOrder)
 
-    // 计算当前市场价格
-    // 优先使用最高买单价格，如果没有买单则使用最低卖单价格
+    // Calculate current market price
+    // Prioritize highest bid price, if no bids then use lowest ask price
     const currentPrice = orderbook.buys.length > 0 
       ? new BigNumber(orderbook.buys[0].price)
         .shiftedBy(market.baseDecimals - market.quoteDecimals)
@@ -155,3 +155,6 @@ export const fetchOrderBook = async (market: Market) => {
   }
 }
 
+export const fetchDerivativeMarkets = async () => {
+  return await indexerDerivativesApi.fetchMarkets()
+}
