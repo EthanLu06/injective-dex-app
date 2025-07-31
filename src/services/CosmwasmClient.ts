@@ -1,8 +1,13 @@
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import { ChainGrpcWasmApi } from "@injectivelabs/sdk-ts";
-import { getActiveWalletType, WalletType, connectWallet } from "./Wallet";
+import {
+  getActiveWalletType,
+  WalletType,
+  connectWallet,
+  walletStrategy,
+} from "./Wallet";
 import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
-import { msgBroadcaster } from "./MsgBroadcaster";
+import { MsgBroadcaster } from "@injectivelabs/wallet-core";
 
 // 浏览器兼容的 base64 编码函数 - 编码查询消息
 function toBase64(obj: any): string {
@@ -18,6 +23,17 @@ const chainWasmApi = new ChainGrpcWasmApi(ENDPOINTS.grpc);
 
 // Contract address - update this with your deployed contract address
 const COUNTER_CONTRACT_ADDRESS = "inj133yj4674mf0mz4vnya76t0ckel23q62ygtgzyp"; // 已更新为您的合约地址
+
+// 创建MsgBroadcaster的函数，确保使用当前活跃的钱包
+const createMsgBroadcaster = () => {
+  return new MsgBroadcaster({
+    walletStrategy,
+    simulateTx: true,
+    network: NETWORK,
+    endpoints: ENDPOINTS,
+    gasBufferCoefficient: 1.1,
+  });
+};
 
 // Counter contract query functions - 根据错误信息修改为小写格式
 export const getCount = async (): Promise<number> => {
@@ -85,6 +101,9 @@ export const incrementCounter = async (
     // 确保使用正确的钱包
     await ensureCorrectWallet();
 
+    // 创建新的MsgBroadcaster实例，确保使用当前活跃的钱包
+    const msgBroadcaster = createMsgBroadcaster();
+
     // 使用小写格式的 increment 而不是 Increment
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
@@ -114,6 +133,9 @@ export const resetCounter = async (
   try {
     // 确保使用正确的钱包
     await ensureCorrectWallet();
+
+    // 创建新的MsgBroadcaster实例，确保使用当前活跃的钱包
+    const msgBroadcaster = createMsgBroadcaster();
 
     // 使用小写格式的 reset 而不是 Reset
     const msg = MsgExecuteContractCompat.fromJSON({
