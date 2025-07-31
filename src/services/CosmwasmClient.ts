@@ -1,11 +1,6 @@
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import { ChainGrpcWasmApi } from "@injectivelabs/sdk-ts";
-import {
-  walletStrategy,
-  getActiveWalletType,
-  WalletType,
-  connectWallet,
-} from "./Wallet";
+import { getActiveWalletType, WalletType, connectWallet } from "./Wallet";
 import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { msgBroadcaster } from "./MsgBroadcaster";
 

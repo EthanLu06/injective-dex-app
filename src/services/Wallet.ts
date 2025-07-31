@@ -36,13 +36,12 @@ export const connectWallet = async (
   try {
     setActiveWalletType(walletType);
 
-    // 1.15.3版本的API支持直接连接
-    if (walletType === WalletType.Keplr) {
-      // 尝试使用Keplr连接
-      await walletStrategy.connectToKeplr?.();
-    } else if (walletType === WalletType.MetaMask) {
-      // 尝试使用MetaMask连接
-      await walletStrategy.connectToMetamask?.();
+    // 使用getWallet方法来获取钱包
+    try {
+      // 这里只尝试获取钱包，不执行connectTo*方法
+      await walletStrategy.getAddresses();
+    } catch (error) {
+      console.error("Error getting wallet addresses:", error);
     }
 
     const addresses = await walletStrategy.getAddresses();

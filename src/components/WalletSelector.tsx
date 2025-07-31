@@ -1,9 +1,5 @@
 import React, { useState } from "react";
-import {
-  WalletType,
-  connectWallet,
-  disconnectWallet,
-} from "../services/Wallet";
+import { WalletType, connectWallet } from "../services/Wallet";
 
 interface WalletSelectorProps {
   onWalletConnected: (address: string) => void;

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { walletStrategy } from "../services/Wallet";
+import { useEffect, useState } from "react";
 import {
   fetchBalances,
   fetchOrderBook,
