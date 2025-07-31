@@ -83,13 +83,22 @@ export const getCount = async (): Promise<number> => {
 const ensureCorrectWallet = async () => {
   try {
     const activeWalletType = getActiveWalletType();
-    console.log("当前活跃钱包:", activeWalletType);
+    console.log("=== 钱包切换检查 ===");
+    console.log("当前活跃钱包类型:", activeWalletType);
 
-    // 使用connectWallet函数重新连接当前选择的钱包
-    // 将string类型转换为WalletType类型
-    await connectWallet(activeWalletType as WalletType);
+    // 强制重新连接当前选择的钱包
+    console.log("开始重新连接钱包...");
+    const address = await connectWallet(activeWalletType as WalletType);
+    console.log("重新连接结果:", address ? "成功" : "失败");
+
+    if (!address) {
+      throw new Error(`无法连接到 ${activeWalletType} 钱包`);
+    }
+
+    console.log("=== 钱包切换完成 ===");
   } catch (e) {
-    console.warn("重新连接钱包失败", e);
+    console.error("重新连接钱包失败:", e);
+    throw e;
   }
 };
 
