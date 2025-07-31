@@ -1,7 +1,6 @@
 import { Dex } from "./components/Dex";
 import { Counter } from "./components/Counter";
 import { useState, useEffect } from "react";
-import { walletStrategy } from "./services/Wallet";
 
 function App() {
   const [address, setAddress] = useState<string>("");

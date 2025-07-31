@@ -65,16 +65,14 @@ export const connectWallet = async (
 
     // 检查钱包是否可用
     if (walletType === WalletType.Keplr) {
-      if (!(window as any).keplr) {
+      if (!window.keplr) {
         throw new Error("Keplr钱包未安装，请先安装Keplr扩展");
       }
       console.log("检测到Keplr钱包，正在连接...");
 
       // 强制连接Keplr
-      await (window as any).keplr.enable(CHAIN_ID);
-      const keplrOfflineSigner = (window as any).keplr.getOfflineSigner(
-        CHAIN_ID
-      );
+      await window.keplr.enable(CHAIN_ID);
+      const keplrOfflineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
       const keplrAccounts = await keplrOfflineSigner.getAccounts();
 
       if (keplrAccounts.length > 0) {
@@ -88,13 +86,13 @@ export const connectWallet = async (
         return address;
       }
     } else if (walletType === WalletType.MetaMask) {
-      if (!(window as any).ethereum) {
+      if (!window.ethereum) {
         throw new Error("MetaMask钱包未安装，请先安装MetaMask扩展");
       }
       console.log("检测到MetaMask钱包，正在连接...");
 
       // 强制连接MetaMask
-      const accounts = await (window as any).ethereum.request({
+      const accounts = await window.ethereum.request({
         method: "eth_requestAccounts",
       });
 
