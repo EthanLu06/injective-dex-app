@@ -2,6 +2,7 @@
 import { WalletStrategy } from "@injectivelabs/wallet-strategy";
 import { ChainId, EthereumChainId } from "@injectivelabs/ts-types";
 import { Web3Exception } from "@injectivelabs/exceptions";
+import { getInjectiveAddress } from "@injectivelabs/sdk-ts";
 
 const CHAIN_ID = ChainId.Testnet;
 const ETHEREUM_CHAIN_ID = EthereumChainId.Sepolia;
@@ -62,7 +63,15 @@ export const connectWallet = async (
     const addresses = await getAddresses();
 
     if (addresses.length > 0) {
-      const address = addresses[0];
+      let address = addresses[0];
+
+      // 如果是MetaMask钱包，需要将以太坊地址转换为Injective地址
+      if (walletType === WalletType.MetaMask && address.startsWith("0x")) {
+        console.log("检测到MetaMask地址，正在转换为Injective地址...");
+        address = getInjectiveAddress(address);
+        console.log("转换后的Injective地址:", address);
+      }
+
       console.log(`成功连接到 ${walletType} 钱包，地址: ${address}`);
 
       // 触发连接成功事件
