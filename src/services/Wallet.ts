@@ -4,6 +4,11 @@ import { ChainId, EthereumChainId } from "@injectivelabs/ts-types";
 import { Web3Exception } from "@injectivelabs/exceptions";
 import { getInjectiveAddress } from "@injectivelabs/sdk-ts";
 
+// 定义Keplr Offline Signer接口
+interface KeplrOfflineSigner {
+  getAccounts(): Promise<Array<{ address: string; pubkey: Uint8Array }>>;
+}
+
 const CHAIN_ID = ChainId.Testnet;
 const ETHEREUM_CHAIN_ID = EthereumChainId.Sepolia;
 
@@ -72,7 +77,9 @@ export const connectWallet = async (
 
       // 强制连接Keplr
       await window.keplr.enable(CHAIN_ID);
-      const keplrOfflineSigner = window.keplr.getOfflineSigner(CHAIN_ID) as any;
+      const keplrOfflineSigner = window.keplr.getOfflineSigner(
+        CHAIN_ID
+      ) as KeplrOfflineSigner;
       const keplrAccounts = await keplrOfflineSigner.getAccounts();
 
       if (keplrAccounts.length > 0) {
