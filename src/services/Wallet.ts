@@ -7,12 +7,12 @@ import { getInjectiveAddress } from "@injectivelabs/sdk-ts";
 const CHAIN_ID = ChainId.Testnet;
 const ETHEREUM_CHAIN_ID = EthereumChainId.Sepolia;
 
-// 初始化钱包策略 - 参考官方模板
+// 初始化钱包策略 - 明确指定策略
 export const walletStrategy = new WalletStrategy({
   chainId: CHAIN_ID,
   ethereumOptions: {
     ethereumChainId: ETHEREUM_CHAIN_ID,
-    rpcUrl: "https://eth-sepolia.alchemyapi.io/v2/demo", // 使用demo key
+    rpcUrl: "https://eth-sepolia.alchemyapi.io/v2/demo",
   },
   strategies: {},
 });
@@ -49,7 +49,7 @@ export const setActiveWalletType = (walletType: WalletType): void => {
   activeWalletType = walletType;
 };
 
-// 连接特定类型的钱包 - 简化版本
+// 连接特定类型的钱包 - 改进版本
 export const connectWallet = async (
   walletType: WalletType
 ): Promise<string | null> => {
@@ -59,8 +59,15 @@ export const connectWallet = async (
     // 设置钱包类型
     setActiveWalletType(walletType);
 
-    // 直接获取地址，让walletStrategy自动处理连接
-    const addresses = await getAddresses();
+    // 先断开之前的连接
+    await walletStrategy.disconnect();
+    console.log("已断开之前的钱包连接");
+
+    // 让walletStrategy自动处理连接
+    console.log("开始获取钱包地址...");
+
+    // 获取地址
+    const addresses = await walletStrategy.getAddresses();
 
     if (addresses.length > 0) {
       let address = addresses[0];
