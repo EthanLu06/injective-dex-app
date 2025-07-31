@@ -63,6 +63,19 @@ export const connectWallet = async (
     await walletStrategy.disconnect();
     console.log("已断开之前的钱包连接");
 
+    // 检查钱包是否可用
+    if (walletType === WalletType.Keplr) {
+      if (!(window as any).keplr) {
+        throw new Error("Keplr钱包未安装，请先安装Keplr扩展");
+      }
+      console.log("检测到Keplr钱包，正在连接...");
+    } else if (walletType === WalletType.MetaMask) {
+      if (!(window as any).ethereum) {
+        throw new Error("MetaMask钱包未安装，请先安装MetaMask扩展");
+      }
+      console.log("检测到MetaMask钱包，正在连接...");
+    }
+
     // 让walletStrategy自动处理连接
     console.log("开始获取钱包地址...");
 
