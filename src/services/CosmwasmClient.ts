@@ -7,11 +7,6 @@ import { Buffer } from "buffer";
 import { ChainId } from "@injectivelabs/ts-types";
 import { MsgBroadcaster } from "@injectivelabs/wallet-core";
 import { WalletStrategy } from "@injectivelabs/wallet-strategy";
-import { MsgExecuteContract } from "@injectivelabs/sdk-ts";
-import {
-  ChainRestTendermintApi,
-  ChainRestAuthApi,
-} from "@injectivelabs/sdk-ts";
 
 // 扩展Window接口以包含钱包
 declare global {
