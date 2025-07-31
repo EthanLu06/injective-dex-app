@@ -5,7 +5,8 @@ import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { toBase64, fromBase64 } from "@injectivelabs/sdk-ts";
 import { Buffer } from "buffer";
 import { ChainId } from "@injectivelabs/ts-types";
-import { SigningStargateClient } from "@cosmjs/stargate";
+import { MsgBroadcaster } from "@injectivelabs/wallet-core";
+import { WalletStrategy } from "@injectivelabs/wallet-strategy";
 
 // 扩展Window接口以包含钱包
 declare global {
@@ -106,14 +107,18 @@ async function executeWithKeplr(injectiveAddress: string): Promise<string> {
   // 获取签名者
   const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
 
-  // 创建Stargate客户端
-  if (!ENDPOINTS.rpc) {
-    throw new Error("RPC endpoint not available");
-  }
-  const client = await SigningStargateClient.connectWithSigner(
-    ENDPOINTS.rpc,
-    offlineSigner
-  );
+  // 创建Injective专用的WalletStrategy
+  const walletStrategy = new WalletStrategy({
+    chainId: ChainId.Testnet,
+    strategies: {},
+  });
+
+  // 创建MsgBroadcaster
+  const msgBroadcaster = new MsgBroadcaster({
+    walletStrategy,
+    network: NETWORK,
+    endpoints: ENDPOINTS,
+  });
 
   // 创建消息
   const msg = MsgExecuteContractCompat.fromJSON({
@@ -124,14 +129,14 @@ async function executeWithKeplr(injectiveAddress: string): Promise<string> {
     },
   });
 
-  // 执行交易 - 设置gas价格
-  const result = await client.signAndBroadcast(injectiveAddress, [msg], {
-    gas: "200000",
-    gasPrice: "5000000000000",
+  // 执行交易
+  const result = await msgBroadcaster.broadcast({
+    msgs: msg,
+    injectiveAddress: injectiveAddress,
   });
 
   console.log("Keplr交易结果:", result);
-  return result.transactionHash;
+  return result.txHash;
 }
 
 // 使用MetaMask原生API执行交易
@@ -209,13 +214,19 @@ async function executeResetWithKeplr(
 
   await window.keplr.enable(ChainId.Testnet);
   const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
-  if (!ENDPOINTS.rpc) {
-    throw new Error("RPC endpoint not available");
-  }
-  const client = await SigningStargateClient.connectWithSigner(
-    ENDPOINTS.rpc,
-    offlineSigner
-  );
+
+  // 创建Injective专用的WalletStrategy
+  const walletStrategy = new WalletStrategy({
+    chainId: ChainId.Testnet,
+    strategies: {},
+  });
+
+  // 创建MsgBroadcaster
+  const msgBroadcaster = new MsgBroadcaster({
+    walletStrategy,
+    network: NETWORK,
+    endpoints: ENDPOINTS,
+  });
 
   const msg = MsgExecuteContractCompat.fromJSON({
     contractAddress: COUNTER_CONTRACT_ADDRESS,
@@ -225,11 +236,11 @@ async function executeResetWithKeplr(
     },
   });
 
-  const result = await client.signAndBroadcast(injectiveAddress, [msg], {
-    gas: "200000",
-    gasPrice: "5000000000000",
+  const result = await msgBroadcaster.broadcast({
+    msgs: msg,
+    injectiveAddress: injectiveAddress,
   });
 
   console.log("Keplr reset结果:", result);
-  return result.transactionHash;
+  return result.txHash;
 }
