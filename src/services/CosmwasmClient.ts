@@ -1,18 +1,10 @@
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import { ChainGrpcWasmApi } from "@injectivelabs/sdk-ts";
-import {
-  getActiveWalletType,
-  WalletType,
-  connectWallet,
-  walletStrategy,
-} from "./Wallet";
+import { walletStrategy } from "./Wallet";
 import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { MsgBroadcaster } from "@injectivelabs/wallet-core";
-
-// 浏览器兼容的 base64 编码函数 - 编码查询消息
-function toBase64(obj: any): string {
-  return btoa(JSON.stringify(obj));
-}
+import { toBase64, fromBase64 } from "@injectivelabs/sdk-ts";
+import { Buffer } from "buffer";
 
 // Injective Testnet
 const NETWORK = Network.Testnet;
@@ -21,21 +13,16 @@ const ENDPOINTS = getNetworkEndpoints(NETWORK);
 // Initialize the wasm API client
 const chainWasmApi = new ChainGrpcWasmApi(ENDPOINTS.grpc);
 
+// 创建MsgBroadcaster - 参考官方模板
+export const msgBroadcastClient = new MsgBroadcaster({
+  walletStrategy,
+  network: NETWORK,
+});
+
 // Contract address - update this with your deployed contract address
 const COUNTER_CONTRACT_ADDRESS = "inj133yj4674mf0mz4vnya76t0ckel23q62ygtgzyp"; // 已更新为您的合约地址
 
-// 创建MsgBroadcaster的函数，确保使用当前活跃的钱包
-const createMsgBroadcaster = () => {
-  return new MsgBroadcaster({
-    walletStrategy,
-    simulateTx: true,
-    network: NETWORK,
-    endpoints: ENDPOINTS,
-    gasBufferCoefficient: 1.1,
-  });
-};
-
-// Counter contract query functions - 根据错误信息修改为小写格式
+// Counter contract query functions - 参考官方模板
 export const getCount = async (): Promise<number> => {
   try {
     console.log(
@@ -43,7 +30,6 @@ export const getCount = async (): Promise<number> => {
       COUNTER_CONTRACT_ADDRESS
     );
 
-    // 使用小写格式的 get_count 而不是 GetCount
     const response = await chainWasmApi.fetchSmartContractState(
       COUNTER_CONTRACT_ADDRESS,
       toBase64({ get_count: {} })
@@ -51,69 +37,26 @@ export const getCount = async (): Promise<number> => {
 
     console.log("Raw response:", response);
 
-    // 处理响应数据
-    let result;
-    if (typeof response.data === "string") {
-      try {
-        result = JSON.parse(response.data);
-      } catch (e) {
-        console.log(
-          "Failed to parse response as JSON, raw data:",
-          response.data
-        );
-        throw new Error("Invalid response format");
-      }
-    } else if (response.data instanceof Uint8Array) {
-      const textDecoder = new TextDecoder();
-      const dataStr = textDecoder.decode(response.data);
-      result = JSON.parse(dataStr);
-    } else {
-      result = response.data;
-    }
+    // 使用官方模板的方式解析响应
+    const { count } = fromBase64(
+      Buffer.from(response.data).toString("base64")
+    ) as { count: number };
 
-    console.log("Parsed result:", result);
-    return result.count;
+    console.log("Parsed result:", { count });
+    return count;
   } catch (error) {
     console.error("Error querying counter:", error);
     throw error;
   }
 };
 
-// 确保在交易前根据用户选择设置正确的钱包策略
-const ensureCorrectWallet = async () => {
-  try {
-    const activeWalletType = getActiveWalletType();
-    console.log("=== 钱包切换检查 ===");
-    console.log("当前活跃钱包类型:", activeWalletType);
-
-    // 强制重新连接当前选择的钱包
-    console.log("开始重新连接钱包...");
-    const address = await connectWallet(activeWalletType as WalletType);
-    console.log("重新连接结果:", address ? "成功" : "失败");
-
-    if (!address) {
-      throw new Error(`无法连接到 ${activeWalletType} 钱包`);
-    }
-
-    console.log("=== 钱包切换完成 ===");
-  } catch (e) {
-    console.error("重新连接钱包失败:", e);
-    throw e;
-  }
-};
-
-// Counter contract execute functions - 根据错误信息修改为小写格式
+// Counter contract execute functions - 参考官方模板
 export const incrementCounter = async (
   injectiveAddress: string
 ): Promise<string> => {
   try {
-    // 确保使用正确的钱包
-    await ensureCorrectWallet();
+    console.log("Incrementing counter with address:", injectiveAddress);
 
-    // 创建新的MsgBroadcaster实例，确保使用当前活跃的钱包
-    const msgBroadcaster = createMsgBroadcaster();
-
-    // 使用小写格式的 increment 而不是 Increment
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
       sender: injectiveAddress,
@@ -122,11 +65,12 @@ export const incrementCounter = async (
       },
     });
 
-    const response = await msgBroadcaster.broadcast({
-      msgs: [msg],
+    const response = await msgBroadcastClient.broadcast({
+      msgs: msg,
       injectiveAddress: injectiveAddress,
     });
 
+    console.log("Increment transaction result:", response);
     return response.txHash;
   } catch (error) {
     console.error("Error incrementing counter:", error);
@@ -134,19 +78,18 @@ export const incrementCounter = async (
   }
 };
 
-// 根据错误信息修改为小写格式
 export const resetCounter = async (
   injectiveAddress: string,
   count: number
 ): Promise<string> => {
   try {
-    // 确保使用正确的钱包
-    await ensureCorrectWallet();
+    console.log(
+      "Resetting counter to:",
+      count,
+      "with address:",
+      injectiveAddress
+    );
 
-    // 创建新的MsgBroadcaster实例，确保使用当前活跃的钱包
-    const msgBroadcaster = createMsgBroadcaster();
-
-    // 使用小写格式的 reset 而不是 Reset
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
       sender: injectiveAddress,
@@ -155,11 +98,12 @@ export const resetCounter = async (
       },
     });
 
-    const response = await msgBroadcaster.broadcast({
-      msgs: [msg],
+    const response = await msgBroadcastClient.broadcast({
+      msgs: msg,
       injectiveAddress: injectiveAddress,
     });
 
+    console.log("Reset transaction result:", response);
     return response.txHash;
   } catch (error) {
     console.error("Error resetting counter:", error);
