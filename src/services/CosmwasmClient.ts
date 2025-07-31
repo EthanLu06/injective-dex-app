@@ -1,6 +1,11 @@
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import { ChainGrpcWasmApi } from "@injectivelabs/sdk-ts";
-import { walletStrategy } from "./Wallet";
+import {
+  walletStrategy,
+  getActiveWalletType,
+  WalletType,
+  connectWallet,
+} from "./Wallet";
 import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { msgBroadcaster } from "./MsgBroadcaster";
 
@@ -63,11 +68,28 @@ export const getCount = async (): Promise<number> => {
   }
 };
 
+// 确保在交易前根据用户选择设置正确的钱包策略
+const ensureCorrectWallet = async () => {
+  try {
+    const activeWalletType = getActiveWalletType();
+    console.log("当前活跃钱包:", activeWalletType);
+
+    // 使用connectWallet函数重新连接当前选择的钱包
+    // 将string类型转换为WalletType类型
+    await connectWallet(activeWalletType as WalletType);
+  } catch (e) {
+    console.warn("重新连接钱包失败", e);
+  }
+};
+
 // Counter contract execute functions - 根据错误信息修改为小写格式
 export const incrementCounter = async (
   injectiveAddress: string
 ): Promise<string> => {
   try {
+    // 确保使用正确的钱包
+    await ensureCorrectWallet();
+
     // 使用小写格式的 increment 而不是 Increment
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
@@ -95,6 +117,9 @@ export const resetCounter = async (
   count: number
 ): Promise<string> => {
   try {
+    // 确保使用正确的钱包
+    await ensureCorrectWallet();
+
     // 使用小写格式的 reset 而不是 Reset
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
