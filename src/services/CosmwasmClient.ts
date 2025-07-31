@@ -1,6 +1,6 @@
 import { Network, getNetworkEndpoints } from "@injectivelabs/networks";
 import { ChainGrpcWasmApi } from "@injectivelabs/sdk-ts";
-import { walletStrategy } from "./Wallet";
+import { walletStrategy, getActiveWalletType, WalletType } from "./Wallet";
 import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { MsgBroadcaster } from "@injectivelabs/wallet-core";
 import { toBase64, fromBase64 } from "@injectivelabs/sdk-ts";
@@ -13,14 +13,29 @@ const ENDPOINTS = getNetworkEndpoints(NETWORK);
 // Initialize the wasm API client
 const chainWasmApi = new ChainGrpcWasmApi(ENDPOINTS.grpc);
 
-// 创建MsgBroadcaster - 参考官方模板，添加更多配置
-export const msgBroadcastClient = new MsgBroadcaster({
-  walletStrategy,
-  network: NETWORK,
-  endpoints: ENDPOINTS,
-  simulateTx: true,
-  gasBufferCoefficient: 1.1,
-});
+// 创建MsgBroadcaster - 根据钱包类型使用不同配置
+const createMsgBroadcaster = () => {
+  const activeWallet = getActiveWalletType();
+
+  if (activeWallet === WalletType.MetaMask) {
+    // MetaMask使用EIP-712签名，需要特殊配置
+    return new MsgBroadcaster({
+      walletStrategy,
+      network: NETWORK,
+      endpoints: ENDPOINTS,
+      simulateTx: true,
+      gasBufferCoefficient: 1.1,
+    });
+  } else {
+    // Keplr使用标准Cosmos签名
+    return new MsgBroadcaster({
+      walletStrategy,
+      network: NETWORK,
+      endpoints: ENDPOINTS,
+      simulateTx: false, // Keplr不需要模拟交易
+    });
+  }
+};
 
 // Contract address - update this with your deployed contract address
 const COUNTER_CONTRACT_ADDRESS = "inj133yj4674mf0mz4vnya76t0ckel23q62ygtgzyp"; // 已更新为您的合约地址
@@ -74,6 +89,15 @@ export const incrementCounter = async (
 
     console.log("创建的消息:", msg);
 
+    // 根据当前钱包类型创建MsgBroadcaster
+    const msgBroadcastClient = createMsgBroadcaster();
+    console.log(
+      "使用的MsgBroadcaster配置:",
+      getActiveWalletType() === WalletType.MetaMask
+        ? "MetaMask (EIP-712)"
+        : "Keplr (Cosmos)"
+    );
+
     const response = await msgBroadcastClient.broadcast({
       msgs: msg,
       injectiveAddress: injectiveAddress,
@@ -115,6 +139,9 @@ export const resetCounter = async (
         reset: { count },
       },
     });
+
+    // 根据当前钱包类型创建MsgBroadcaster
+    const msgBroadcastClient = createMsgBroadcaster();
 
     const response = await msgBroadcastClient.broadcast({
       msgs: msg,
