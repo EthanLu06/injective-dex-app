@@ -18,7 +18,7 @@ declare global {
   interface Window {
     keplr?: {
       enable: (chainId: string) => Promise<void>;
-      getOfflineSigner: (chainId: string) => any;
+      getOfflineSigner: (chainId: string) => unknown;
     };
     ethereum?: {
       request: (args: { method: string }) => Promise<string[]>;
@@ -109,9 +109,6 @@ async function executeWithKeplr(injectiveAddress: string): Promise<string> {
   // 启用Keplr
   await window.keplr.enable(ChainId.Testnet);
 
-  // 获取签名者
-  const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
-
   // 创建Injective专用的WalletStrategy
   const walletStrategy = new WalletStrategy({
     chainId: ChainId.Testnet,
@@ -163,15 +160,6 @@ async function executeWithMetaMask(injectiveAddress: string): Promise<string> {
 
   const ethereumAddress = accounts[0];
   console.log("MetaMask地址:", ethereumAddress);
-
-  // 创建消息
-  const msg = MsgExecuteContractCompat.fromJSON({
-    contractAddress: COUNTER_CONTRACT_ADDRESS,
-    sender: injectiveAddress,
-    msg: {
-      increment: {},
-    },
-  });
 
   // 使用Injective的EIP-712签名
   try {
@@ -256,7 +244,6 @@ async function executeResetWithKeplr(
   }
 
   await window.keplr.enable(ChainId.Testnet);
-  const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
 
   // 创建Injective专用的WalletStrategy
   const walletStrategy = new WalletStrategy({
