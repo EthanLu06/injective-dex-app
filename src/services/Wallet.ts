@@ -49,7 +49,7 @@ export const setActiveWalletType = (walletType: WalletType): void => {
   activeWalletType = walletType;
 };
 
-// 连接特定类型的钱包 - 改进版本
+// 连接特定类型的钱包 - 强制使用选定钱包
 export const connectWallet = async (
   walletType: WalletType
 ): Promise<string | null> => {
@@ -69,36 +69,46 @@ export const connectWallet = async (
         throw new Error("Keplr钱包未安装，请先安装Keplr扩展");
       }
       console.log("检测到Keplr钱包，正在连接...");
+
+      // 强制连接Keplr
+      await (window as any).keplr.enable(CHAIN_ID);
+      const keplrOfflineSigner = (window as any).keplr.getOfflineSigner(
+        CHAIN_ID
+      );
+      const keplrAccounts = await keplrOfflineSigner.getAccounts();
+
+      if (keplrAccounts.length > 0) {
+        const address = keplrAccounts[0].address;
+        console.log(`成功连接到Keplr钱包，地址: ${address}`);
+
+        // 触发连接成功事件
+        window.dispatchEvent(
+          new CustomEvent("walletConnected", { detail: address })
+        );
+        return address;
+      }
     } else if (walletType === WalletType.MetaMask) {
       if (!(window as any).ethereum) {
         throw new Error("MetaMask钱包未安装，请先安装MetaMask扩展");
       }
       console.log("检测到MetaMask钱包，正在连接...");
-    }
 
-    // 让walletStrategy自动处理连接
-    console.log("开始获取钱包地址...");
+      // 强制连接MetaMask
+      const accounts = await (window as any).ethereum.request({
+        method: "eth_requestAccounts",
+      });
 
-    // 获取地址
-    const addresses = await walletStrategy.getAddresses();
+      if (accounts.length > 0) {
+        const ethereumAddress = accounts[0];
+        const injectiveAddress = getInjectiveAddress(ethereumAddress);
+        console.log("转换后的Injective地址:", injectiveAddress);
 
-    if (addresses.length > 0) {
-      let address = addresses[0];
-
-      // 如果是MetaMask钱包，需要将以太坊地址转换为Injective地址
-      if (walletType === WalletType.MetaMask && address.startsWith("0x")) {
-        console.log("检测到MetaMask地址，正在转换为Injective地址...");
-        address = getInjectiveAddress(address);
-        console.log("转换后的Injective地址:", address);
+        // 触发连接成功事件
+        window.dispatchEvent(
+          new CustomEvent("walletConnected", { detail: injectiveAddress })
+        );
+        return injectiveAddress;
       }
-
-      console.log(`成功连接到 ${walletType} 钱包，地址: ${address}`);
-
-      // 触发连接成功事件
-      window.dispatchEvent(
-        new CustomEvent("walletConnected", { detail: address })
-      );
-      return address;
     }
 
     return null;
