@@ -72,7 +72,7 @@ export const connectWallet = async (
 
       // 强制连接Keplr
       await window.keplr.enable(CHAIN_ID);
-      const keplrOfflineSigner = window.keplr.getOfflineSigner(CHAIN_ID);
+      const keplrOfflineSigner = window.keplr.getOfflineSigner(CHAIN_ID) as any;
       const keplrAccounts = await keplrOfflineSigner.getAccounts();
 
       if (keplrAccounts.length > 0) {
