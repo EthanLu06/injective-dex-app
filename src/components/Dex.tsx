@@ -47,10 +47,32 @@ export function Dex() {
   // 处理钱包连接成功
   const handleWalletConnected = async (walletAddress: string) => {
     setAddress(walletAddress);
+
+    // 确保使用正确的Injective地址格式
+    let injectiveAddress = walletAddress;
+    if (walletAddress.startsWith("0x")) {
+      // 如果是MetaMask地址，转换为Injective地址
+      const { getInjectiveAddress } = await import("@injectivelabs/sdk-ts");
+      injectiveAddress = getInjectiveAddress(walletAddress);
+      console.log(
+        "转换MetaMask地址为Injective地址:",
+        walletAddress,
+        "->",
+        injectiveAddress
+      );
+    }
+
     // 获取钱包余额
-    const { balances: walletBalances } = await fetchBalances(walletAddress);
-    console.log("walletBalances", walletBalances);
-    setBalances(walletBalances);
+    try {
+      const { balances: walletBalances } = await fetchBalances(
+        injectiveAddress
+      );
+      console.log("walletBalances", walletBalances);
+      setBalances(walletBalances);
+    } catch (error) {
+      console.error("获取余额失败:", error);
+      // 即使获取余额失败，也不影响其他功能
+    }
 
     // 触发自定义事件通知其他组件
     window.dispatchEvent(
