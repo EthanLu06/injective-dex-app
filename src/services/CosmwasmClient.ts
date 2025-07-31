@@ -5,6 +5,7 @@ import { MsgExecuteContractCompat } from "@injectivelabs/sdk-ts";
 import { MsgBroadcaster } from "@injectivelabs/wallet-core";
 import { toBase64, fromBase64 } from "@injectivelabs/sdk-ts";
 import { Buffer } from "buffer";
+import { ChainId } from "@injectivelabs/ts-types";
 
 // Injective Testnet
 const NETWORK = Network.Testnet;
@@ -14,8 +15,26 @@ const ENDPOINTS = getNetworkEndpoints(NETWORK);
 const chainWasmApi = new ChainGrpcWasmApi(ENDPOINTS.grpc);
 
 // 创建MsgBroadcaster - 根据钱包类型使用不同配置
-const createMsgBroadcaster = () => {
+const createMsgBroadcaster = async () => {
   const activeWallet = getActiveWalletType();
+  console.log("当前活动钱包类型:", activeWallet);
+
+  // 在创建MsgBroadcaster之前，确保walletStrategy使用正确的钱包
+  if (activeWallet === WalletType.Keplr) {
+    // 确保Keplr已连接
+    if ((window as any).keplr) {
+      await (window as any).keplr.enable(ChainId.Testnet);
+      console.log("已确保Keplr连接");
+    }
+  } else if (activeWallet === WalletType.MetaMask) {
+    // 确保MetaMask已连接
+    if ((window as any).ethereum) {
+      await (window as any).ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      console.log("已确保MetaMask连接");
+    }
+  }
 
   if (activeWallet === WalletType.MetaMask) {
     // MetaMask使用EIP-712签名，需要特殊配置
@@ -90,7 +109,7 @@ export const incrementCounter = async (
     console.log("创建的消息:", msg);
 
     // 根据当前钱包类型创建MsgBroadcaster
-    const msgBroadcastClient = createMsgBroadcaster();
+    const msgBroadcastClient = await createMsgBroadcaster();
     console.log(
       "使用的MsgBroadcaster配置:",
       getActiveWalletType() === WalletType.MetaMask
@@ -141,7 +160,7 @@ export const resetCounter = async (
     });
 
     // 根据当前钱包类型创建MsgBroadcaster
-    const msgBroadcastClient = createMsgBroadcaster();
+    const msgBroadcastClient = await createMsgBroadcaster();
 
     const response = await msgBroadcastClient.broadcast({
       msgs: msg,
