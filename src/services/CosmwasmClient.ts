@@ -7,6 +7,11 @@ import { Buffer } from "buffer";
 import { ChainId } from "@injectivelabs/ts-types";
 import { MsgBroadcaster } from "@injectivelabs/wallet-core";
 import { WalletStrategy } from "@injectivelabs/wallet-strategy";
+import { MsgExecuteContract } from "@injectivelabs/sdk-ts";
+import {
+  ChainRestTendermintApi,
+  ChainRestAuthApi,
+} from "@injectivelabs/sdk-ts";
 
 // 扩展Window接口以包含钱包
 declare global {
@@ -169,9 +174,47 @@ async function executeWithMetaMask(injectiveAddress: string): Promise<string> {
   });
 
   // 使用Injective的EIP-712签名
-  // 这里需要实现EIP-712签名逻辑
-  // 由于比较复杂，我们先抛出错误
-  throw new Error("MetaMask EIP-712签名暂未实现，请使用Keplr钱包");
+  try {
+    // 创建Injective专用的WalletStrategy，配置MetaMask
+    const walletStrategy = new WalletStrategy({
+      chainId: ChainId.Testnet,
+      ethereumOptions: {
+        ethereumChainId: 11155111, // Sepolia testnet
+        rpcUrl: "https://eth-sepolia.alchemyapi.io/v2/demo",
+      },
+      strategies: {},
+    });
+
+    // 创建MsgBroadcaster
+    const msgBroadcaster = new MsgBroadcaster({
+      walletStrategy,
+      network: NETWORK,
+      endpoints: ENDPOINTS,
+      simulateTx: true,
+      gasBufferCoefficient: 1.1,
+    });
+
+    // 创建消息
+    const msg = MsgExecuteContractCompat.fromJSON({
+      contractAddress: COUNTER_CONTRACT_ADDRESS,
+      sender: injectiveAddress,
+      msg: {
+        increment: {},
+      },
+    });
+
+    // 执行交易
+    const result = await msgBroadcaster.broadcast({
+      msgs: msg,
+      injectiveAddress: injectiveAddress,
+    });
+
+    console.log("MetaMask交易结果:", result);
+    return result.txHash;
+  } catch (error) {
+    console.error("MetaMask交易失败:", error);
+    throw new Error("MetaMask交易失败，请确保已连接到Sepolia测试网并重试");
+  }
 }
 
 export const resetCounter = async (
