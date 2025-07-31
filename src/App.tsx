@@ -6,20 +6,9 @@ import { walletStrategy } from "./services/Wallet";
 function App() {
   const [address, setAddress] = useState<string>("");
 
-  // Check if wallet is already connected
+  // 移除自动检查钱包连接，让用户手动选择钱包
   useEffect(() => {
-    const checkWalletConnection = async () => {
-      try {
-        const addresses = await walletStrategy.getAddresses();
-        if (addresses.length > 0) {
-          setAddress(addresses[0]);
-        }
-      } catch (error) {
-        console.error("Error checking wallet connection:", error);
-      }
-    };
-
-    checkWalletConnection();
+    // 不再自动连接钱包，等待用户手动选择
 
     // Listen for wallet connection events
     const handleWalletConnected = (e: CustomEvent) => {
