@@ -13,10 +13,13 @@ const ENDPOINTS = getNetworkEndpoints(NETWORK);
 // Initialize the wasm API client
 const chainWasmApi = new ChainGrpcWasmApi(ENDPOINTS.grpc);
 
-// 创建MsgBroadcaster - 参考官方模板
+// 创建MsgBroadcaster - 参考官方模板，添加更多配置
 export const msgBroadcastClient = new MsgBroadcaster({
   walletStrategy,
   network: NETWORK,
+  endpoints: ENDPOINTS,
+  simulateTx: true,
+  gasBufferCoefficient: 1.1,
 });
 
 // Contract address - update this with your deployed contract address
@@ -55,7 +58,11 @@ export const incrementCounter = async (
   injectiveAddress: string
 ): Promise<string> => {
   try {
-    console.log("Incrementing counter with address:", injectiveAddress);
+    console.log("=== 开始增加计数器 ===");
+    console.log("合约地址:", COUNTER_CONTRACT_ADDRESS);
+    console.log("发送者地址:", injectiveAddress);
+    console.log("网络:", NETWORK);
+    console.log("端点:", ENDPOINTS);
 
     const msg = MsgExecuteContractCompat.fromJSON({
       contractAddress: COUNTER_CONTRACT_ADDRESS,
@@ -65,15 +72,26 @@ export const incrementCounter = async (
       },
     });
 
+    console.log("创建的消息:", msg);
+
     const response = await msgBroadcastClient.broadcast({
       msgs: msg,
       injectiveAddress: injectiveAddress,
     });
 
-    console.log("Increment transaction result:", response);
+    console.log("交易广播结果:", response);
+    console.log("=== 增加计数器完成 ===");
     return response.txHash;
   } catch (error) {
-    console.error("Error incrementing counter:", error);
+    console.error("=== 增加计数器失败 ===");
+    console.error("错误详情:", error);
+    if (error instanceof Error) {
+      console.error("错误类型:", error.constructor.name);
+      console.error("错误消息:", error.message);
+      if (error.stack) {
+        console.error("错误堆栈:", error.stack);
+      }
+    }
     throw error;
   }
 };
