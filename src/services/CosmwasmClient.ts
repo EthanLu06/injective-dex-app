@@ -107,6 +107,9 @@ async function executeWithKeplr(injectiveAddress: string): Promise<string> {
   const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
 
   // 创建Stargate客户端
+  if (!ENDPOINTS.rpc) {
+    throw new Error("RPC endpoint not available");
+  }
   const client = await SigningStargateClient.connectWithSigner(
     ENDPOINTS.rpc,
     offlineSigner
@@ -121,8 +124,11 @@ async function executeWithKeplr(injectiveAddress: string): Promise<string> {
     },
   });
 
-  // 执行交易
-  const result = await client.signAndBroadcast(injectiveAddress, [msg], "auto");
+  // 执行交易 - 设置gas价格
+  const result = await client.signAndBroadcast(injectiveAddress, [msg], {
+    gas: "200000",
+    gasPrice: "5000000000000",
+  });
 
   console.log("Keplr交易结果:", result);
   return result.transactionHash;
@@ -203,6 +209,9 @@ async function executeResetWithKeplr(
 
   await window.keplr.enable(ChainId.Testnet);
   const offlineSigner = window.keplr.getOfflineSigner(ChainId.Testnet);
+  if (!ENDPOINTS.rpc) {
+    throw new Error("RPC endpoint not available");
+  }
   const client = await SigningStargateClient.connectWithSigner(
     ENDPOINTS.rpc,
     offlineSigner
@@ -216,7 +225,10 @@ async function executeResetWithKeplr(
     },
   });
 
-  const result = await client.signAndBroadcast(injectiveAddress, [msg], "auto");
+  const result = await client.signAndBroadcast(injectiveAddress, [msg], {
+    gas: "200000",
+    gasPrice: "5000000000000",
+  });
 
   console.log("Keplr reset结果:", result);
   return result.transactionHash;
