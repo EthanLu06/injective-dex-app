@@ -1,11 +1,11 @@
-import { Dex } from './components/Dex'
+import { Dex } from "./components/Dex";
 
 function App() {
   return (
-    <div className="min-h-screen w-full bg-gray-100">
+    <div className="min-h-screen w-full">
       <Dex />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
