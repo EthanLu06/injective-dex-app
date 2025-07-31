@@ -9,6 +9,6 @@ const repoName = "injective-dex-app";
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), nodePolyfills({ protocolImports: true })],
-  // 添加GitHub Pages的基本路径
-  base: process.env.NODE_ENV === "production" ? `/${repoName}/` : "/",
+  // 添加GitHub Pages的基本路径 - 始终使用仓库名称作为前缀
+  base: `/${repoName}/`,
 });
