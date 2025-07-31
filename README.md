@@ -1,71 +1,92 @@
-# Injective DEX DApp
+# Injective DEX App with CosmWasm Counter Integration
 
-这是一个基于 Injective 协议的去中心化交易所（DEX）前端应用，使用 React + TypeScript + Vite 构建。
+This application demonstrates how to build a frontend for Injective Protocol DEX and integrate with a CosmWasm smart contract.
 
-## 功能特点
+## Features
 
-- 连接 Injective 钱包
-- 查看钱包余额
-- 查看现货市场列表
-- 实时订单簿显示
-- 支持市价单交易
-- 交易历史记录
-- 支持 INJ/USDT 等交易对
+- Connect with Injective wallets
+- Display wallet balances
+- View and interact with spot markets
+- Interact with a CosmWasm counter contract
+  - View current count
+  - Increment the counter
+  - Reset the counter (owner only)
 
-## 技术栈
+## Setup Instructions
 
-- React 18
-- TypeScript
-- Vite
-- TailwindCSS
-- @injectivelabs/sdk-ts
+### 1. Install dependencies
 
-## 开发环境设置
-
-1. 安装依赖
 ```bash
 yarn install
 ```
 
-2. 启动开发服务器
+### 2. Deploy the Counter Contract to Injective Testnet
+
+You'll need to deploy the counter contract to the Injective testnet. Follow these steps:
+
+1. Build the counter contract:
+
+```bash
+cd ../counter
+cargo wasm
+```
+
+2. Deploy the contract using the Injective CLI:
+
+```bash
+# Install the injective CLI if you haven't already
+# Initialize your wallet
+injectived keys add <your-key-name> --recover
+
+# Upload the contract WASM
+injectived tx wasm store artifacts/counter.wasm --from <your-key-name> --chain-id=injective-888 --gas-prices=500000000inj --gas=2000000 --node=https://k8s.testnet.tm.injective.network:443 --yes
+
+# Note down the code ID from the output
+# Instantiate the contract
+injectived tx wasm instantiate <code-id> '{"count": 0}' --from <your-key-name> --label "my-counter" --chain-id=injective-888 --gas-prices=500000000inj --node=https://k8s.testnet.tm.injective.network:443 --yes
+
+# Get the contract address
+injectived q wasm list-contract-by-code <code-id> --node=https://k8s.testnet.tm.injective.network:443
+```
+
+### 3. Update the Contract Address
+
+Once you have deployed the contract, update the contract address in the frontend:
+
+1. Open `src/services/CosmwasmClient.ts`
+2. Replace the placeholder with your deployed contract address:
+
+```typescript
+const COUNTER_CONTRACT_ADDRESS = "inj1your_contract_address_here"; // Replace with actual contract address
+```
+
+### 4. Start the development server
+
 ```bash
 yarn dev
 ```
 
-3. 构建生产版本
-```bash
-yarn build
-```
+### 5. Access the application
 
-## 项目结构
+Open your browser and navigate to http://localhost:5173
 
-```
-src/
-  ├── components/     # React 组件
-  ├── services/      # 服务层（钱包、API等）
-  ├── types/         # TypeScript 类型定义
-  └── utils/         # 工具函数
-```
+## Usage
 
-## 主要功能说明
+1. Connect your Injective wallet
+2. View the current counter value
+3. Click "Increment" to increase the count
+4. Click "Reset to 0" to reset the count (only works if you're the contract owner)
 
-### 订单簿
-- 显示当前市场的最新买单和卖单
-- 实时更新价格和数量
-- 支持查看交易深度
+## Development
 
-### 交易功能
-- 支持市价单交易
-- 显示交易哈希
-- 交易成功后自动更新订单簿
+The main components of this application are:
 
-### 钱包集成
-- 支持 Injective 钱包连接
-- 显示钱包余额
-- 支持多代币余额查询
+- `Dex.tsx` - The main DEX component for trading on Injective
+- `Counter.tsx` - The component that interacts with the CosmWasm counter contract
+- `CosmwasmClient.ts` - Service for interacting with CosmWasm contracts on Injective
 
-## 注意事项
+## Additional Resources
 
-- 当前版本仅支持测试网
-- 请确保钱包中有足够的测试代币
-- 交易前请仔细核对价格和数量
+- [Injective Protocol Documentation](https://docs.injective.network/)
+- [CosmWasm Documentation](https://docs.cosmwasm.com/)
+- [Counter Contract Source](../counter)

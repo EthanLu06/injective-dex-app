@@ -9,6 +9,7 @@ import { Coin } from "@injectivelabs/sdk-ts";
 import { msgBroadcaster } from "../services/MsgBroadcaster";
 import { makeMsgCreateSpotLimitOrder } from "../services/Transactions";
 import { BigNumber } from "@injectivelabs/utils";
+import { WalletSelector } from "./WalletSelector";
 
 interface Market {
   marketId: string;
@@ -44,19 +45,18 @@ export function Dex() {
   }>({ buys: [], sells: [] });
   const [lastTxHash, setLastTxHash] = useState<string>("");
 
-  const connectWallet = async () => {
-    try {
-      const addresses = await walletStrategy.getAddresses();
-      if (addresses.length > 0) {
-        setAddress(addresses[0]);
-        // 获取钱包余额
-        const { balances: walletBalances } = await fetchBalances(addresses[0]);
-        console.log("walletBalances", walletBalances);
-        setBalances(walletBalances);
-      }
-    } catch (error) {
-      console.error("Error connecting wallet:", error);
-    }
+  // 处理钱包连接成功
+  const handleWalletConnected = async (walletAddress: string) => {
+    setAddress(walletAddress);
+    // 获取钱包余额
+    const { balances: walletBalances } = await fetchBalances(walletAddress);
+    console.log("walletBalances", walletBalances);
+    setBalances(walletBalances);
+
+    // 触发自定义事件通知其他组件
+    window.dispatchEvent(
+      new CustomEvent("walletConnected", { detail: walletAddress })
+    );
   };
 
   const loadMarkets = async () => {
@@ -178,12 +178,8 @@ export function Dex() {
                   Connect your Injective wallet to start trading
                 </p>
               </div>
-              <button
-                onClick={connectWallet}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
-              >
-                Connect Wallet
-              </button>
+              {/* 替换原来的连接按钮为 WalletSelector 组件 */}
+              <WalletSelector onWalletConnected={handleWalletConnected} />
             </div>
           </div>
         ) : (
