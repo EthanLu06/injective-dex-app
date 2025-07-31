@@ -90,3 +90,14 @@ The main components of this application are:
 - [Injective Protocol Documentation](https://docs.injective.network/)
 - [CosmWasm Documentation](https://docs.cosmwasm.com/)
 - [Counter Contract Source](../counter)
+
+<img width="3020" height="1546" alt="image" src="https://github.com/user-attachments/assets/99fc1bfc-d1db-4458-9bf7-e4fb277f1258" />
+<img width="1398" height="1364" alt="image" src="https://github.com/user-attachments/assets/ab458914-6a73-4698-8b10-123644747439" />
+<img width="2310" height="1518" alt="image" src="https://github.com/user-attachments/assets/8fc537ea-9073-4720-9d88-ddc2a7efa540" />
+<img width="2872" height="1506" alt="image" src="https://github.com/user-attachments/assets/7910b306-b68d-4997-84be-a1817c523610" />
+<img width="2692" height="1052" alt="image" src="https://github.com/user-attachments/assets/544ac8eb-3e20-4fbc-988b-462346a75438" />
+
+
+
+
+
